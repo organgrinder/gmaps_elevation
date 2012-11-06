@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+	<head>
+	    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+	
+	    <style type="text/css">
+			html { height: 100% }
+			body { height: 100%; margin: 0; padding: 0 }
+			#map_canvas { height: 100% }
+	    </style>
+	
+	    <script type="text/javascript"
+			src="//maps.googleapis.com/maps/api/js
+			?key=AIzaSyCXAocGD2cgELvYBmMpz1CLG81YlEHfdrA
+			&sensor=false
+			&libraries=visualization">
+	    </script>
+		
+	 	<script type = "text/javascript" src="mapScript.js"></script>
+	 	<script type = "text/javascript" src="jquery.js"></script>
+	
+	</head>
+
+	<!-- this is an alternative to the DOM Listener included in mapScript.js  -->
+	<!-- <body onload="initialize()"> -->
+	<body>
+		<div id="map_canvas" style="width: 650px; height: 650px"></div>		
+		<div id="reload">
+<!--
+			<button type="button" onClick="gatherElevations()" class="btn btn-large btn-primary">
+				Gather Elevations In View
+			</button>
+-->
+<!--
+			<button type="button" onClick="showElevations()" class="btn btn-large btn-primary">
+				Show Elevations In View
+			</button>
+-->
+<!--
+			<button type="button" onClick="gatherGridElevations()" class="btn btn-large btn-primary">
+				Gather Batch of Grid Elevations
+			</button>
+-->
+			<button type="button" onClick="changeGradient()" class="btn btn-large btn-primary">
+				Alternate Color Scheme
+			</button>
+			<button type="button" onClick="toggleHeatmap()" class="btn btn-large btn-primary">
+				Toggle Heatmap
+			</button>
+			<button type="button" onClick="showLiveElevations()" class="btn btn-large btn-primary">
+				Use Live Data
+			</button>
+			
+		</div>
+		<div id="elev_info"></div>
+		<!-- <div id="test_output">--Test Output Goes Here--</div> -->
+	</body>
+</html>	
+
+<!-- Google maps API key: AIzaSyCXAocGD2cgELvYBmMpz1CLG81YlEHfdrA -->
