@@ -1,31 +1,44 @@
 <!DOCTYPE html>
 <html>
-	<head>
-	    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+    <title>Gmaps Elevation by organgrinder</title>
 	
-	    <style type="text/css">
-			html { height: 100% }
-			body { height: 100%; margin: 0; padding: 0 }
-			#map_canvas { height: 100% }
-	    </style>
-	
-	    <script type="text/javascript"
-			src="//maps.googleapis.com/maps/api/js
-			?key=AIzaSyCXAocGD2cgELvYBmMpz1CLG81YlEHfdrA
-			&sensor=false
-			&libraries=visualization">
-	    </script>
-		
-	 	<script type = "text/javascript" src="mapScript.js"></script>
-	 	<script type = "text/javascript" src="jquery.js"></script>
-	
-	</head>
+    <script type="text/javascript"
+		src="//maps.googleapis.com/maps/api/js
+		?key=AIzaSyCXAocGD2cgELvYBmMpz1CLG81YlEHfdrA
+		&sensor=false
+		&libraries=visualization">
+    </script>
+	<!-- Google maps API key: AIzaSyCXAocGD2cgELvYBmMpz1CLG81YlEHfdrA -->
 
-	<!-- this is an alternative to the DOM Listener included in mapScript.js  -->
-	<!-- <body onload="initialize()"> -->
-	<body>
-		<div id="map_canvas" style="width: 650px; height: 650px"></div>		
-		<div id="reload">
+ 	<script type = "text/javascript" src="mapScript.js"></script>
+ 	<script type = "text/javascript" src="jquery.js"></script>
+
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <link href='https://fonts.googleapis.com/css?family=Chivo:900' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+</head>
+
+<!-- this is an alternative to the DOM Listener included in mapScript.js  -->
+<!-- <body onload="initialize()"> -->
+
+<body>
+    <div id="container">
+		<div class="inner">
+			<header>
+				<h1>Gmaps Elevation</h1>
+				<h2>Elevation displayed on Google Maps using a heatmap layer</h2>
+			</header>
+			<section id="main_content">
+
+				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+
+				<div id="map_canvas"></div>
 <!--
 			<button type="button" onClick="gatherElevations()" class="btn btn-large btn-primary">
 				Gather Elevations In View
@@ -41,20 +54,48 @@
 				Gather Batch of Grid Elevations
 			</button>
 -->
-			<button type="button" onClick="changeGradient()" class="btn btn-large btn-primary">
-				Alternate Color Scheme
-			</button>
-			<button type="button" onClick="toggleHeatmap()" class="btn btn-large btn-primary">
-				Toggle Heatmap
-			</button>
-			<button type="button" onClick="showLiveElevations()" class="btn btn-large btn-primary">
-				Use Live Data
-			</button>
-			
-		</div>
-		<div id="elev_info"></div>
-		<!-- <div id="test_output">--Test Output Goes Here--</div> -->
-	</body>
-</html>	
+				<div id="map_buttons">
+					<button type="button" onClick="changeGradient()" class="button blue">
+						Alternate Color Scheme
+					</button>
+					<button type="button" onClick="toggleHeatmap()" class="button blue">
+						Toggle Heatmap
+					</button>
+					<button type="button" onClick="showLiveElevations()" class="button blue">
+						Use Live Data
+					</button>
+				</div>
+				<h3>What's currently shown in this view</h3>
+				<div id="elev_info">Some info about the above map</div>
 
-<!-- Google maps API key: AIzaSyCXAocGD2cgELvYBmMpz1CLG81YlEHfdrA -->
+				<h3>Why is this useful?</h3>
+				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<ul>
+					<li>Why not just use Google Maps Terrain View?</li>
+					<li>Why not just use Google Maps Terrain View?</li>
+				</ul>
+
+				<h3>How does it work?</h3>
+				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<h5>Static Data</h5>
+				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<h5>Live Data</h5>
+				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+
+				<h3>Support or Contact</h3>
+
+				<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+	        </section> <!-- main content -->
+	        <section id="downloads" class="clearfix">
+	        <hr>
+	          <a href="https://github.com/organgrinder/gmaps_elevation/zipball/master" id="download-zip" class="button"><span>Download .zip</span></a>
+	          <a href="https://github.com/organgrinder/gmaps_elevation/tarball/master" id="download-tar-gz" class="button"><span>Download .tar.gz</span></a>
+	          <a href="https://github.com/organgrinder/gmaps_elevation" id="view-on-github" class="button"><span>View on GitHub</span></a>
+	        </section>
+	        <footer>
+	          Gmaps Elevation is maintained by <a href="https://github.com/organgrinder">organgrinder</a>
+	        </footer>
+		</div> <!-- inner -->
+    </div> <!-- container -->
+</body>
+</html>

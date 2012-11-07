@@ -37,18 +37,16 @@ puts "outside loop"
 
 =begin
   NEXT:
-  2. separate maps into a new github project, make it live just by loading from there
-    - start local http server with 'python -mSimpleHTTPServer' in terminal
-    - will require an index.html
   3. write explanation/story/title/etc
-  2. style it with bootstrap CSS / otherwise make it pretty
   3. can access session/cookies data using js?
+    - to keep track of live data use
   4. make buttons logical
+  4. alert for live data use
   4. adjust influence radius for live data
     - and otherwise make live data behave like static data
   3. better colors - combine the color schemes 
   4. live version with 425 or 1700 points of data
-    - user can set accuracy - 484 or 1936
+    - (?) user can set accuracy - 484 or 1936
   
   LATER:
   1. download Marin and Peninsula data using JSON and JQuery
@@ -58,10 +56,13 @@ puts "outside loop"
   6. redo whole thing in openStreetMap to show elev of blocks/streets
   2. (?) fix the flashing - clear only after a reload is done 
     - no reloading file may help this - UPDATE: nope, it doesn't
-  2. more helpful gradiant colors - sharper edges maybe?
-  3. revisit accuracy issue - I want more data at higher zooms
+  3. revisit accuracy issue - more data at higher zooms
   
   DONE:
+  2. style it with bootstrap CSS / otherwise make it pretty
+  2. separate maps into a new github project, make it live just by loading from there
+    - start local http server with 'python -mSimpleHTTPServer' in terminal
+    - will require an index.html
   3. display more information - zoom level, max/min elevation shown
   2. get rid of pure js, insert jquery
   2. refactor with smaller readable methods

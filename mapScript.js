@@ -3,8 +3,6 @@ var lines, moreLines;
 
 google.maps.event.addDomListener(window, 'load', initialize)
 
-$('#elev_info').html("hiaha");
-
 function initialize() {
 	var sanFran = new google.maps.LatLng(37.755, -122.436);
 
@@ -29,6 +27,10 @@ function initialize() {
 } // end initialize
 
 function showElevations() {
+	showStaticElevations();
+}
+
+function showStaticElevations() {
 	
 	// after heatmap turned off, it stays off while user pans and zooms
 	if (lines && !elevHeatmap.getMap()) return; 
@@ -141,14 +143,16 @@ function recursiveElevGetter(viewHeater, locations, step, totalSteps) {
 				viewHeater.maxElevation = Math.max(viewHeater.maxElevation, results[i].elevation);
 				viewHeater.minElevation = Math.min(viewHeater.minElevation, results[i].elevation);
 			}
+
 			if (step == totalSteps) {
+				// base case for recursion; we have all the data so we make the map
+				
+				$('#elev_info').append('<br>Generating heat map layer');
 				viewHeater.makeHeatmapElevDataFromArrays(locations);
 
 				// remove old heatmap layer before adding the new one
 				if (elevHeatmap) elevHeatmap.setMap(null); 
-				
-				$('#elev_info').append('Generating heat map layer');
-				
+			
 				// create heatmap layer and add it to the map
 				elevHeatmap = viewHeater.makeHeatmap();
 			    elevHeatmap.setMap(map);
@@ -264,13 +268,18 @@ function updateInfo(viewHeater) {
 	if (!viewHeater) {
 		$('#elev_info').html('heater DNE ?');
 	} else {
-		$("#elev_info").html('Highest elevation in view: ' + 
+		$("#elev_info").html('Highest elevation: ' + 
 			Math.round(viewHeater.maxElevation) + 
-			' meters <br>Lowest elevation in view: ' + 
+			' meters <br>Lowest elevation: ' + 
 			Math.round(viewHeater.minElevation) + 
 			' meters');
-		$("#elev_info").append('<br>Heatmap in this view uses ' + 
+		$("#elev_info").append('<br>Heatmap created using ' + 
 			viewHeater.heatmapElevData.length + ' points of data');
+		$("#elev_info").append('<br>Zoom level: ' + 
+			viewHeater.zoom);
+		if (viewHeater.zoom > 16 || viewHeater.zoom < 12) {
+			$("#elev_info").append(" (Heatmap only really works for zoom levels between 12 and 16)")
+		}
 	}
 }
 
