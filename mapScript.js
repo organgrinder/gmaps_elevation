@@ -70,7 +70,7 @@ function showLiveElevations() {
 
 	// can change density for more accuracy but may hit Google elevation API limits
 	// changing density requires changing radius of influence as well
-	var density = 8; // 31 gives a nice round 1024 total points
+	var density = 31; // 31 gives a nice round 1024 total points
 	var totalSteps = 6; // how many pieces to break up the request into
 	
 	viewHeater.addLocationsInView(density);
@@ -97,7 +97,6 @@ function recursiveElevGetter(viewHeater, step, totalSteps) {
 			} else {
 				$.cookie('requests', requestLocations.length, { expires: 1 } );
 			}
-			console.log($.cookie('requests'));
 
 			// show progress so user doesn't think it's frozen
 			viewHeater.showProgress(step, totalSteps);
