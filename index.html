@@ -14,6 +14,7 @@
 
  	<script type = "text/javascript" src="mapScript.js"></script>
  	<script type = "text/javascript" src="jquery.js"></script>
+ 	<script type = "text/javascript" src="jquery.cookie.js"></script>
 
     <meta charset='utf-8'>
     <meta http-equiv="X-UA-Compatible" content="chrome=1">
@@ -32,11 +33,11 @@
 		<div class="inner">
 			<header>
 				<h1>Gmaps Elevation</h1>
-				<h2>Elevation displayed on Google Maps using a heatmap layer</h2>
+				<h2>Showing elevation on Google Maps using a heatmap layer</h2>
 			</header>
 			<section id="main_content">
 
-				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<p>This map shows the highest points in San Francisco as red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
 
 				<div id="map_canvas"></div>
 <!--
@@ -59,32 +60,42 @@
 						Alternate Color Scheme
 					</button>
 					<button type="button" onClick="toggleHeatmap()" class="button blue">
-						Toggle Heatmap
+						Toggle Heatmap On/Off
 					</button>
-					<button type="button" onClick="showLiveElevations()" class="button blue">
-						Use Live Data
+					<button type="button" id="switch_data_source" onClick="switchDataSource()" class="button blue">
+						Switch to Live Data
+					</button>
+					<button type="button" id="update_live_data" onClick="showLiveElevations()" class="button orange">
+						Update Live Data
 					</button>
 				</div>
+				<div id="alert_info"></div>
 				<h3>What's currently shown in this view</h3>
 				<div id="elev_info">Some info about the above map</div>
 
 				<h3>Why is this useful?</h3>
-				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
-				<ul>
-					<li>Why not just use Google Maps Terrain View?</li>
-					<li>Why not just use Google Maps Terrain View?</li>
-				</ul>
+				<p>I thought of this while trying to plan running and biking routes around San Francisco without knowing where all the hills were. By showing at a glance where the high and low points in view are, this map can help either avoids hills as much as possible, or hit the biggest ones, whichever you prefer.  Or it can tell you what is the easiest way to bike out of your neighborhood.  Or you can just look at the map to get a clear picture of where the hills are in your city or neighborhood if you find that kind of thing interesting.</p>
+
+				<h5>Why not just use Google Maps Terrain View?</h5>
+				<p>Google Maps Terrain View has shaded bumps to show you where the hills are, which look great but aren't really useful for any practical purpose.  The one exception is at zoom level 13, where if you're patient and look really closely, you can trace the contour lines drawn on the map to see slight changes in elevation.  I think the color coded heat map makes it a lot more clear what's going on elevation-wise.  That said, the map does look really cool when you have the heatmap and Google Maps Terrain View turned on at the same time.</p>
 
 				<h3>How does it work?</h3>
-				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<p>The map uses the heatmap feature of the Google Maps API.  Heatmaps typically show red in areas where there are a lot of points clustered together and green where there are very few, but instead I've overlaid an even grid of points of the whole map, and assigned each one a weight corresponding to the elevation at that point. When these weighted points are interpreted as a heatmap, the whole map gets filled in with appropriate colors. The highest point in view is given a weight of 1 and the lowest point is given a weight of 0, so the full range of colors is always shown, even if the difference between the high point and the low point is very small.  This was an essential part of the project - to be able to zoom way and examine the subtle changes in elevation in a small area.</p>
+				
 				<h5>Static Data</h5>
-				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<p>Data for 15,000 points covering all of San Francisco is stored in a text file on the server.  When the map is zoomed or panned, the heatmap is generated using data from this file for the points that are visible in the current view window. At zoom levels 15 and above, a second file with another 15,000 points is loaded to provide increased accuracy.  Even with this additional data, the heatmap at higher zoom levels is made up of many fewer points (i.e. show less detail) than at lower zoom levels.</p>
+				
 				<h5>Live Data</h5>
-				<p>This map shows the highest points in San Francisco as dark red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<p>When you click 'Update Live Data', a series of requests are made to the Google Elevation Service API to gather elevation data for 1024 points in the current view window.  Thus, the same level of detail is available at all zoom levels when using live data.</p>
+				
+				<h3>Why is live data problematic?</h3>
+				<p>This is why the live data  do I have to click update live data instead of having it reload automatically when the map moves?</p>
+				<h3>Hasn't this been done before?</h3>
+				<p>I haven't seen it in quite this form anywhere else.  Some close examples are ., ., .,.  I'd love to hear about anyone else doing stuff along these lines.</p>
 
-				<h3>Support or Contact</h3>
+				<h3>Contact</h3>
 
-				<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+				<p>I'd love to hear your feedback at <a href="mailto:harris.jay@gmail.com">harris.jay@gmail.com</a>.</p>
 	        </section> <!-- main content -->
 	        <section id="downloads" class="clearfix">
 	        <hr>

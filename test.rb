@@ -38,18 +38,11 @@ puts "outside loop"
 =begin
   NEXT:
   3. write explanation/story/title/etc
-  3. can access session/cookies data using js?
-    - to keep track of live data use
-  4. make buttons logical
-  4. alert for live data use
-  4. adjust influence radius for live data
-    - and otherwise make live data behave like static data
   3. better colors - combine the color schemes 
-  4. live version with 425 or 1700 points of data
-    - (?) user can set accuracy - 484 or 1936
   
   LATER:
   1. download Marin and Peninsula data using JSON and JQuery
+  2. single click on map shows elevation at that point
   2. web interface to specify new area to download
   2. add ability to scroll to new territory
   4. mouseover elevation?
@@ -57,8 +50,17 @@ puts "outside loop"
   2. (?) fix the flashing - clear only after a reload is done 
     - no reloading file may help this - UPDATE: nope, it doesn't
   3. revisit accuracy issue - more data at higher zooms
+  4. live version with 425 or 1700 points of data
+    - (?) user can set accuracy - 484 or 1936
   
   DONE:
+  3. can access session/cookies data using js?
+    - to keep track of live data use
+  4. alert for live data use
+  1. refine live data heatmap - eliminate water spots 
+  2. refactor - e.g. adding heatmap to map is repeated code
+  4. adjust influence radius for live data
+  4. make buttons logical
   2. style it with bootstrap CSS / otherwise make it pretty
   2. separate maps into a new github project, make it live just by loading from there
     - start local http server with 'python -mSimpleHTTPServer' in terminal

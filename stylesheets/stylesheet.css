@@ -60,6 +60,21 @@ table {
 	padding-bottom: 25px;
 }
 
+#alert_live_info {
+	border:solid 2px #DEDEDE;
+	color:#222222;
+	background-color: #f78d1d;
+	padding:5px 16px;
+	text-align: center;
+	font-size: .8em;
+	margin-bottom: 25px;
+	text-shadow: none;
+}
+
+.big {
+	font: 20px;
+}
+
 #elev_info {
 	border:solid 2px #DEDEDE;
 	color:#222222;
@@ -83,7 +98,7 @@ table {
 	text-decoration: none;
 	font: 14px/100% Arial, Helvetica, sans-serif;
 	font-weight: bold;
-	padding: .5em 2em .55em;
+	padding: .5em 1em .55em;
 	text-shadow: 0 1px 1px rgba(0,0,0,.3);
 	-webkit-border-radius: .5em; 
 	-moz-border-radius: .5em;
@@ -120,26 +135,26 @@ table {
 	background: -moz-linear-gradient(top,  #0078a5,  #00adee);
 	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#0078a5', endColorstr='#00adee');
 }
-
-/*
-.styled-button {
-	-webkit-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
-	-moz-box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
-	box-shadow:rgba(0,0,0,0.2) 0 1px 0 0;
-	color:#333;
-	background-color:#FA2;
-	border-radius:5px;
-	-moz-border-radius:5px;
-	-webkit-border-radius:5px;
-	border:none;
-	font-family:'Helvetica Neue',Arial,sans-serif;
-	font-size:16px;
-	font-weight:700;
-	height:32px;
-	padding:4px 16px;
-	text-shadow:#527ACC 0 1px 0
+.orange {
+	color: #fef4e9;
+	border: solid 1px #da7c0c;
+	background: #f78d1d;
+	background: -webkit-gradient(linear, left top, left bottom, from(#faa51a), to(#f47a20));
+	background: -moz-linear-gradient(top,  #faa51a,  #f47a20);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#faa51a', endColorstr='#f47a20');
 }
-*/
+.orange:hover {
+	background: #f47c20;
+	background: -webkit-gradient(linear, left top, left bottom, from(#f88e11), to(#f06015));
+	background: -moz-linear-gradient(top,  #f88e11,  #f06015);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f88e11', endColorstr='#f06015');
+}
+.orange:active {
+	color: #fcd3a5;
+	background: -webkit-gradient(linear, left top, left bottom, from(#f47a20), to(#faa51a));
+	background: -moz-linear-gradient(top,  #f47a20,  #faa51a);
+	filter:  progid:DXImageTransform.Microsoft.gradient(startColorstr='#f47a20', endColorstr='#faa51a');
+}
 
 /* ORIGINAL STYLES */
 
