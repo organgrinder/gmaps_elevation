@@ -38,22 +38,21 @@ puts "outside loop"
 =begin
   NEXT:
   3. write explanation/story/title/etc
-  3. better colors - combine the color schemes 
   
   LATER:
   1. download Marin and Peninsula data using JSON and JQuery
   2. single click on map shows elevation at that point
+  3. revisit accuracy issue - more data at higher zooms
+  2. add ability to jump to new territory with search box
   2. web interface to specify new area to download
-  2. add ability to scroll to new territory
-  4. mouseover elevation?
-  6. redo whole thing in openStreetMap to show elev of blocks/streets
+  4. (?) mouseover elevation
   2. (?) fix the flashing - clear only after a reload is done 
     - no reloading file may help this - UPDATE: nope, it doesn't
-  3. revisit accuracy issue - more data at higher zooms
-  4. live version with 425 or 1700 points of data
-    - (?) user can set accuracy - 484 or 1936
+  4. (?) user can set accuracy for live data
+  6. redo whole thing in openStreetMap to show elev of blocks/streets
   
   DONE:
+  3. better colors - combine the color schemes 
   3. can access session/cookies data using js?
     - to keep track of live data use
   4. alert for live data use

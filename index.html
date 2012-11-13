@@ -37,7 +37,7 @@
 			</header>
 			<section id="main_content">
 
-				<p>This map shows the highest points in San Francisco as red, the lowest points with no color, and in between as green or yellow.  All the coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
+				<p>This map shows the highest points in San Francisco as white, the lowest points with no color, and in between as blue, red, yellow, or green.  The coloration is relative to what's currently in view, so if you zoom in, you can see the contours of a neighborhood in as much detail as you can see the whole city.</p>
 
 				<div id="map_canvas"></div>
 <!--
@@ -74,28 +74,30 @@
 				<div id="elev_info">Some info about the above map</div>
 
 				<h3>Why is this useful?</h3>
-				<p>I thought of this while trying to plan running and biking routes around San Francisco without knowing where all the hills were. By showing at a glance where the high and low points in view are, this map can help either avoids hills as much as possible, or hit the biggest ones, whichever you prefer.  Or it can tell you what is the easiest way to bike out of your neighborhood.  Or you can just look at the map to get a clear picture of where the hills are in your city or neighborhood if you find that kind of thing interesting.</p>
+				<p>I thought of this while trying to plan running and biking routes around San Francisco without knowing where all the hills were. By showing at a glance where the high and low points in view are, this map can help you either avoids hills, or go up and down the biggest ones, whatever you're looking for.  It can also do things like show you the easiest way to bike out of your neighborhood to get to a friend's house.  Or you can just look at the map to get a clear picture of where and how big the hills in your city or neighborhood are if you find that kind of thing interesting.</p>
 
 				<h5>Why not just use Google Maps Terrain View?</h5>
-				<p>Google Maps Terrain View has shaded bumps to show you where the hills are, which look great but aren't really useful for any practical purpose.  The one exception is at zoom level 13, where if you're patient and look really closely, you can trace the contour lines drawn on the map to see slight changes in elevation.  I think the color coded heat map makes it a lot more clear what's going on elevation-wise.  That said, the map does look really cool when you have the heatmap and Google Maps Terrain View turned on at the same time.</p>
+				<p>Google Maps Terrain View has shaded bumps to show you where the hills are, which looks cool but isn't actually very useful because it's hard to tell how big the hills are, or even whether something is a hill or a valley.  The one exception is at zoom level 13, where if you're patient and look really closely, you can trace the contour lines drawn on the map to see slight changes in elevation.  I think the color coded heat map makes it a lot more clear what's going on elevation-wise.  That said, the map does look pretty cool when you turn on both the heatmap and Google Maps Terrain View.</p>
 
 				<h3>How does it work?</h3>
-				<p>The map uses the heatmap feature of the Google Maps API.  Heatmaps typically show red in areas where there are a lot of points clustered together and green where there are very few, but instead I've overlaid an even grid of points of the whole map, and assigned each one a weight corresponding to the elevation at that point. When these weighted points are interpreted as a heatmap, the whole map gets filled in with appropriate colors. The highest point in view is given a weight of 1 and the lowest point is given a weight of 0, so the full range of colors is always shown, even if the difference between the high point and the low point is very small.  This was an essential part of the project - to be able to zoom way and examine the subtle changes in elevation in a small area.</p>
+				<p>The map uses the heatmap feature of the Google Maps API.  Heatmaps typically show hot colors in areas where there are a lot of points clustered together and cool colors where there are very few points spread out over a large area, but instead I've overlaid an even grid of points of the whole map, and assigned each one a weight corresponding to the elevation at that point. When these weighted points are interpreted as a heatmap, the whole map gets filled in with appropriate colors. The highest point in view is given a weight of 1 and the lowest point is given a weight of 0, so the full range of colors is always shown, even if the difference between the high point and the low point is very small.  This was an essential part of the project - to be able to zoom in and examine the subtle changes in elevation in a small area.</p>
+				
+				<p>Some additional refinements became necessary along the way to make the map look and behave the way it does.  A small border of points around the actual view window is displayed to avoid distortion around the edge.  The default heatmap color scale has been altered to show finer gradations (when a lot of colors are used, the bands of color almost look like the lines on a topo map, except easier to read).  The radius of influence of each point is adjusted depending on the zoom level to reduce pixelation.</p>
 				
 				<h5>Static Data</h5>
-				<p>Data for 15,000 points covering all of San Francisco is stored in a text file on the server.  When the map is zoomed or panned, the heatmap is generated using data from this file for the points that are visible in the current view window. At zoom levels 15 and above, a second file with another 15,000 points is loaded to provide increased accuracy.  Even with this additional data, the heatmap at higher zoom levels is made up of many fewer points (i.e. show less detail) than at lower zoom levels.</p>
+				<p>Data for 15,000 points covering all of San Francisco is stored in a text file on the server.  When the map is zoomed or panned, the heatmap is generated using data from this file for the points that are visible in the current view window.  At zoom levels 15 and above, a second file with another 15,000 points is loaded to provide increased accuracy.  Even with this additional data, the heatmap at higher zoom levels is made up of fewer points (and shows less detail) than at lower zoom levels.</p>
 				
 				<h5>Live Data</h5>
-				<p>When you click 'Update Live Data', a series of requests are made to the Google Elevation Service API to gather elevation data for 1024 points in the current view window.  Thus, the same level of detail is available at all zoom levels when using live data.</p>
+				<p>When you turn on or update live data, a series of requests is made to the Google Elevation Service API to gather elevation data for 1024 points covering the current view window.  This means the same level of detail is available at all zoom levels when using live data (it's less detailed than static data when zoomed out, and more detailed when zoomed in).  Also, live data is not restricted to San Francisco - you can look at any area on earth.</p>
 				
 				<h3>Why is live data problematic?</h3>
-				<p>This is why the live data  do I have to click update live data instead of having it reload automatically when the map moves?</p>
+				<p>First, it's slow to render the heatmap because loading all those points of data from Google's Elevation Service API takes a long time.  Additionally, Google limits a user to requesting elevations for no more than 25,000 points per day.  To avoid freezing the page and hitting the quota, the live elevation heatmap does not update automatically when you pan or zoom, but only when you click "Update Live Data."</p>
 				<h3>Hasn't this been done before?</h3>
-				<p>I haven't seen it in quite this form anywhere else.  Some close examples are ., ., .,.  I'd love to hear about anyone else doing stuff along these lines.</p>
+				<p>I haven't seen any other maps that show hills in a given view and their size relative to each other in a localized, adjustable viewer the way this map does.  Some other interesting projects involving elevation are <a href="http://www.mapmyrun.com">MapMyRun.com</a> (shows an elevation profile as you trace a route on the map), <a href="http://wtp2.appspot.com/TerrainTileLayer.htm">Google Maps Terrain Tile Viewer</a> (shows elevation for 1 point at a time as you mouseover a map of the UK), and <a href="http://www.daftlogic.com/sandbox-google-maps-find-altitude.htm">Google Maps Find Altitude</a> (simple tool to get elevation at one point at a time).  I'd love to hear about anyone else doing stuff along these lines.</p>
 
 				<h3>Contact</h3>
 
-				<p>I'd love to hear your feedback at <a href="mailto:harris.jay@gmail.com">harris.jay@gmail.com</a>.</p>
+				<p>I'd love to hear your feedback at <a href="mailto:harris.jay@gmail.com">harris.jay@gmail.com</a>.  Links to my GitHub are below.</p>
 	        </section> <!-- main content -->
 	        <section id="downloads" class="clearfix">
 	        <hr>

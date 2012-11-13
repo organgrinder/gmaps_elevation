@@ -26,10 +26,11 @@ function initialize() {
 	// creating a map referencing the DOM automatically inserts it at that point
     map = new google.maps.Map($('#map_canvas')[0], mapOptions);
 
-	// set up for toggling heatmap and data source
+	// set up for toggling data source, gradient colors, and heatmap itself
 	map.liveData = false;
 	$('#update_live_data').hide(); // hide 'Update Live Data' button
 	map.heatmap = true;
+	map.gradient = 1;
 
 	google.maps.event.addListener(map, 'idle', mapBecomesIdle);
 	
@@ -219,7 +220,7 @@ function heater(map) {
 			maxIntensity: 2,
 			dissipating: true,
 			radius: influenceByZoomLevel(map.getZoom()),
-			gradient: (elevHeatmap && elevHeatmap.gradient) ? gradient() : null
+			gradient: gradient(map.gradient) // (elevHeatmap && elevHeatmap.gradient) ? gradient() : null
 	    });
 	
 		// add heatmap layer to the map
@@ -276,19 +277,23 @@ function heater(map) {
 	}
 	
 	this.showProgress = function(step, totalSteps) {
-		$('#elev_info').html('Loading data... ' + 
+		$('#alert_info').html("<div id='alert_live_info'><strong>Loading data... " + 
 			(this.locationsInView.length * (step / totalSteps)).toFixed(0) + 
-			"/" + this.locationsInView.length);
+			"/" + this.locationsInView.length + "</div>");
 	}
 	
 	this.updateInsideInfo = function() {
-		$("#elev_info").html('Highest elevation: ' + 
-			Math.round(this.maxElevation) + 
-			' meters <br>Lowest elevation: ' + 
-			Math.round(this.minElevation) + 
-			' meters');
-		$("#elev_info").append('<br>Heatmap created using ' + 
-			this.heatmapElevData.length + ' points of data');
+		if (this.heatmapElevData.length > 0) {
+			$("#elev_info").html('Highest elevation: ' + 
+				Math.round(this.maxElevation) + 
+				' meters <br>Lowest elevation: ' + 
+				Math.round(this.minElevation) + 
+				' meters');
+			$("#elev_info").append('<br>Heatmap created using ' + 
+				this.heatmapElevData.length + ' points of data');
+		} else {
+			$("#elev_info").html('No static data available for this view.<br>Try switching to live data or returning to San Francisco.');
+		}
 	}
 	
 } // end heater
@@ -301,23 +306,24 @@ function updateInfo(viewHeater) {
 
 	// show info about current heatmap
 	if (!viewHeater) {
-		$('#elev_info').html('No heatmap');
+		$('#elev_info').html('Heatmap turned off');
 	} else {
 		viewHeater.updateInsideInfo();
 	}
 
 	// show current zoom level
 	$("#elev_info").append('<br>Zoom level: ' + map.getZoom());
-	if ((map.getZoom() > 16 || map.getZoom() < 12) && !map.liveData) {
-		$("#elev_info").append(" ¡Static heatmap only really works for zoom levels between 12 and 16!");
-	}
 	
-	// alert for live data use
+	// alert messages
 	if (map.liveData) {
 		var requests = $.cookie('requests');
 		$("#alert_info").html("<div id='alert_live_info'><strong>¡Cuidado!</strong> Live data is subject to quotas set by the Google elevation API<br>You have currently used <strong>" + requests + "</strong> of your allowed <strong>25,000</strong> requests per day.<br>For more information, see \"Why is Live Data Problematic?\" below.</div>");
 	} else {
-		$("#alert_info").html("");
+		if (map.getZoom() > 16 || map.getZoom() < 12) {
+			$("#alert_info").html("<div id='alert_live_info'>Static data only really works between zoom levels 12 and 16.<br>Try zooming in or out or switching to live data.</div>");
+		} else {
+			$("#alert_info").html("");			
+		}
 	}
 }
 
@@ -334,18 +340,19 @@ function loadFile(filename) {
 }
 
 function influenceByZoomLevel(zoom) {
-	if (map.liveData) return 45;
+	if (map.liveData) return 40;
 	
 	if (zoom >= 17) return 110;
 	if (zoom >= 16) return 80; 
-	if (zoom >= 15) return 45; // additional data loaded at zoom 15 as well
+	if (zoom >= 15) return 40; // additional data loaded at zoom 15 as well
 	if (zoom >= 14) return 30;
 	if (zoom >= 13) return 15;
 	return 10;
 }
 
-function gradient() {
-	return [
+function gradient(number) {
+	// order is [cold, medium, hot]
+	var original = [
 	   'rgba(0, 255, 255, 0)',
 		'rgba(0, 255, 255, 1)',
 		'rgba(0, 191, 255, 1)',
@@ -361,11 +368,24 @@ function gradient() {
 		'rgba(191, 0, 31, 1)',
 		'rgba(255, 0, 0, 1)'
 	];
+	var modified = [
+		'rgba(0, 255, 0, 0)',
+		'rgba(0, 255, 0, 1)',
+		'rgba(255, 255, 0, 1)',
+		'rgba(255, 0, 0, 1)',
+		'rgba(0, 0, 255, 1)',
+		'rgba(255, 255, 255, 1)',
+	];
+	if (number == 1) return modified;
+	if (number == 2) return original;
+	if (number == 3) return null;
 }
 
 function changeGradient() {
+	if (map.gradient == 3) map.gradient = 1 
+	else map.gradient += 1;
 	elevHeatmap.setOptions({
-	    gradient: elevHeatmap.get('gradient') ? null : gradient()
+	    gradient: gradient(map.gradient)
 	});
 }
 
