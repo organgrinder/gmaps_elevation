@@ -91,11 +91,11 @@ function showElevations() {
 function showStaticElevations() {
 	var viewHeater = new Heater(atlas.map);
 
-	loadFile('elevations.txt', atlas.points, viewHeater, function(data, viewHeater) {
+	loadFile('elevations.txt', atlas.points, function(data) {
 		viewHeater.addRelevantPoints(data);
 		
 		if (atlas.map.getZoom() >= 15) {
-			loadFile('elevations3.txt', atlas.morePoints, viewHeater, function(data, viewHeater) {
+			loadFile('elevations3.txt', atlas.morePoints, function(data) {
 				viewHeater.addRelevantPoints(data);
 				viewHeater.showNewHeatmap();
 			});
@@ -105,10 +105,10 @@ function showStaticElevations() {
 	}); 
 } 
 
-// includes cache function
-function loadFile(filename, cache, viewHeater, callback) {
+// includes caching functionality
+function loadFile(filename, cache, callback) {
 	if (cache) {
-		callback(cache, viewHeater);
+		callback(cache);
 		return;
 	}
 	
@@ -116,7 +116,7 @@ function loadFile(filename, cache, viewHeater, callback) {
 		url: filename,
 		async: true,
 		success: function(result) {
-			callback(preProcess(result.split("\n")), viewHeater);
+			callback(preProcess(result.split("\n")));
 		}
 	});
 }
