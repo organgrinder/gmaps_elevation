@@ -1,7 +1,4 @@
 
-// global vars to hold file data after it's lodaded to avoid reloading
-// var points, morePoints;
-
 // global holder object
 var atlas = {
 	map: 			null,
