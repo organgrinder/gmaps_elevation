@@ -6,39 +6,40 @@ var points, morePoints;
 var map, elevHeatmap;
 
 // global holder object
-var atlas = {};
-
-// constants, sort of
-// order is [cold, medium, hot]
-atlas.ORIGINAL = [
-	'rgba(0, 255, 255, 0)',
-	'rgba(0, 255, 255, 1)',
-	'rgba(0, 191, 255, 1)',
-	'rgba(0, 127, 255, 1)',
-	'rgba(0, 63, 255, 1)',
-	'rgba(0, 0, 255, 1)',
-	'rgba(0, 0, 223, 1)',
-	'rgba(0, 0, 191, 1)',
-	'rgba(0, 0, 159, 1)',
-	'rgba(0, 0, 127, 1)',
-	'rgba(63, 0, 91, 1)',
-	'rgba(127, 0, 63, 1)',
-	'rgba(191, 0, 31, 1)',
-	'rgba(255, 0, 0, 1)'
-];
-atlas.MODIFIED = [
-	'rgba(0, 255, 0, 0)',
-	'rgba(0, 255, 0, 1)',
-	'rgba(255, 255, 0, 1)',
-	'rgba(255, 0, 0, 1)',
-	'rgba(0, 0, 255, 1)',
-	'rgba(255, 255, 255, 1)',
-];
-
-// can change density for more accuracy but may hit Google elevation API limits
-// changing density requires changing radius of influence as well
-atlas.DENSITY = 31; // 31 gives a nice round 1024 total points
-atlas.TOTALSTEPS = 6; // how many pieces to break up the request into
+var atlas = {
+	// heatmap gradients
+	// order is [cold, medium, hot]
+	ORIGINAL: [
+		'rgba(0, 255, 255, 0)',
+		'rgba(0, 255, 255, 1)',
+		'rgba(0, 191, 255, 1)',
+		'rgba(0, 127, 255, 1)',
+		'rgba(0, 63, 255, 1)',
+		'rgba(0, 0, 255, 1)',
+		'rgba(0, 0, 223, 1)',
+		'rgba(0, 0, 191, 1)',
+		'rgba(0, 0, 159, 1)',
+		'rgba(0, 0, 127, 1)',
+		'rgba(63, 0, 91, 1)',
+		'rgba(127, 0, 63, 1)',
+		'rgba(191, 0, 31, 1)',
+		'rgba(255, 0, 0, 1)'
+	],
+	MODIFIED: [
+		'rgba(0, 255, 0, 0)',
+		'rgba(0, 255, 0, 1)',
+		'rgba(255, 255, 0, 1)',
+		'rgba(255, 0, 0, 1)',
+		'rgba(0, 0, 255, 1)',
+		'rgba(255, 255, 255, 1)',
+	],
+	// can change density for more accuracy but may hit Google elevation API limits
+	// changing density requires changing radius of influence as well
+	// 31 gives a nice round 1024 total points
+	DENSITY: 31, 
+	// how many pieces to break up the request into
+	TOTALSTEPS: 6 
+};
 
 google.maps.event.addDomListener(window, 'load', initialize)
 
