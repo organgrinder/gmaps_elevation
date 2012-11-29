@@ -7,6 +7,7 @@ var map, elevHeatmap;
 
 // global holder object
 var atlas = {
+	
 	// heatmap gradients
 	// order is [cold, medium, hot]
 	ORIGINAL: [
@@ -33,11 +34,13 @@ var atlas = {
 		'rgba(0, 0, 255, 1)',
 		'rgba(255, 255, 255, 1)',
 	],
+	
 	// can change density for more accuracy but may hit Google elevation API limits
 	// changing density requires changing radius of influence as well
 	// 31 gives a nice round 1024 total points
 	DENSITY: 31, 
-	// how many pieces to break up the request into
+	
+	// how many pieces to break up the live data request into
 	TOTALSTEPS: 6 
 };
 
@@ -89,12 +92,27 @@ function showElevations() {
 function showStaticElevations() {
 	var viewHeater = new Heater(map);
 
-	if (points) callback(points, viewHeater);
-	else loadFile('elevations.txt', callback, viewHeater); 
+	loadFile('elevations.txt', points, viewHeater, function(data, viewHeater) {
+		viewHeater.addRelevantPoints(data);
+		
+		if (map.getZoom() >= 15) {
+			loadFile('elevations3.txt', morePoints, viewHeater, function(data, viewHeater) {
+				viewHeater.addRelevantPoints(data);
+				viewHeater.showNewHeatmap();
+			});
+		} else {
+			viewHeater.showNewHeatmap();
+		}
+	}); 
 } 
 
-// callback hell
-function loadFile(filename, callback, viewHeater) {
+// includes cache function
+function loadFile(filename, cache, viewHeater, callback) {
+	if (cache) {
+		callback(cache, viewHeater);
+		return;
+	}
+	
 	$.ajax({
 		url: filename,
 		async: true,
@@ -102,25 +120,6 @@ function loadFile(filename, callback, viewHeater) {
 			callback(preProcess(result.split("\n")), viewHeater);
 		}
 	});
-}
-
-// second level of hell
-var callback = function(points, viewHeater) {
-	viewHeater.addRelevantPoints(points);
-
-	// load additional data at zoom 15 and above
-	if (map.getZoom() >= 15) { 
-		
-		// third level
-		var callback2 = function(points, viewHeater) {
-			viewHeater.addRelevantPoints(points);
-		};
-		
-		if (morePoints) callback2(morePoints, viewHeater);
-		else loadFile('elevations3.txt', callback2, viewHeater);
-	}
-
-	viewHeater.showNewHeatmap();
 }
 
 // fetch elevation data from Google API and display it on map
@@ -402,8 +401,8 @@ function influenceByZoomLevel(zoom) {
 	if (zoom >= 17) return 110;
 	if (zoom >= 16) return 80; 
 	if (zoom >= 15) return 40; // additional data loaded at zoom 15 as well
-	if (zoom >= 14) return 30;
-	if (zoom >= 13) return 15;
+	if (zoom >= 14) return 31;
+	if (zoom >= 13) return 16;
 	return 10;
 }
 
