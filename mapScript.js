@@ -1,12 +1,13 @@
 
 // global vars to hold file data after it's lodaded to avoid reloading
-var points, morePoints;
-
-// slutty global vars with attributes that everyone has free access to
-var map, elevHeatmap;
+// var points, morePoints;
 
 // global holder object
 var atlas = {
+	map: 			null,
+	elevHeatmap: 	null,
+	points: 		null,
+	morePoints: 	null,
 	
 	// heatmap gradients
 	// order is [cold, medium, hot]
@@ -63,15 +64,15 @@ function initialize() {
 	};
 	
 	// creating a map referencing the DOM automatically inserts it at that point
-    map = new google.maps.Map($('#map_canvas')[0], mapOptions);
+    atlas.map = new google.maps.Map($('#map_canvas')[0], mapOptions);
 
 	// set up for toggling data source, gradient colors, and heatmap itself
-	map.liveData = false;
+	atlas.map.liveData = false;
 	$('#update_live_data').hide(); // hide 'Update Live Data' button
-	map.heatmap = true;
-	map.gradient = 0;
+	atlas.map.heatmap = true;
+	atlas.map.gradient = 0;
 
-	google.maps.event.addListener(map, 'idle', mapBecomesIdle);
+	google.maps.event.addListener(atlas.map, 'idle', mapBecomesIdle);
 	
 } // end initialize
 
@@ -81,22 +82,23 @@ function initialize() {
 
 function mapBecomesIdle() {
 	// with static map data enabled, heatmap updates upon every pan or zoom
-	if (!map.liveData && map.heatmap) showStaticElevations();
+	if (!atlas.map.liveData && atlas.map.heatmap) showStaticElevations();
+	else updateInfo();
 }
 
 function showElevations() {
-	map.liveData ? showLiveElevations() : showStaticElevations();
+	atlas.map.liveData ? showLiveElevations() : showStaticElevations();
 }
 
 // pull elevation data from file and display it on map
 function showStaticElevations() {
-	var viewHeater = new Heater(map);
+	var viewHeater = new Heater(atlas.map);
 
-	loadFile('elevations.txt', points, viewHeater, function(data, viewHeater) {
+	loadFile('elevations.txt', atlas.points, viewHeater, function(data, viewHeater) {
 		viewHeater.addRelevantPoints(data);
 		
-		if (map.getZoom() >= 15) {
-			loadFile('elevations3.txt', morePoints, viewHeater, function(data, viewHeater) {
+		if (atlas.map.getZoom() >= 15) {
+			loadFile('elevations3.txt', atlas.morePoints, viewHeater, function(data, viewHeater) {
 				viewHeater.addRelevantPoints(data);
 				viewHeater.showNewHeatmap();
 			});
@@ -124,7 +126,7 @@ function loadFile(filename, cache, viewHeater, callback) {
 
 // fetch elevation data from Google API and display it on map
 function showLiveElevations() {
-	var viewHeater = new Heater(map);
+	var viewHeater = new Heater(atlas.map);
 
 	viewHeater.addLocationsInView();
 	
@@ -137,7 +139,6 @@ function showLiveElevations() {
 
 // Heater gathers data relevant to a heatmap, puts data in form necessary 
 // for Google elevation API, and displays heatmap layer on the map
-// function Heater(map) {
 var Heater = function(map) {
 	var currBounds = map.getBounds();
 	this.top = currBounds.getNorthEast().lat();
@@ -257,7 +258,7 @@ Heater.prototype.addRelevantPoints = function(points) {
 Heater.prototype.showNewHeatmap = function() {
 
 	// remove old heatmap layer before adding the new one
-	if (elevHeatmap) elevHeatmap.setMap(null); 
+	if (atlas.elevHeatmap) atlas.elevHeatmap.setMap(null); 
 
 	// create array of weighted points
 	this.makeHeatmapElevData();
@@ -266,18 +267,18 @@ Heater.prototype.showNewHeatmap = function() {
 	var heatmapElevArray = new google.maps.MVCArray(this.heatmapElevData);
 	
 	// create heatmap layer
-	elevHeatmap = new google.maps.visualization.HeatmapLayer({
+	atlas.elevHeatmap = new google.maps.visualization.HeatmapLayer({
 	    data: heatmapElevArray,
 		opacity: .6,
 		maxIntensity: 2,
 		dissipating: true,
-		radius: influenceByZoomLevel(map.getZoom()),
-		gradient: gradient(map.gradient) 
+		radius: influenceByZoomLevel(atlas.map.getZoom()),
+		gradient: gradient(atlas.map.gradient) 
     });
 
 	// add heatmap layer to the map
-    elevHeatmap.setMap(map);
-	map.heatmap = true;
+    atlas.elevHeatmap.setMap(atlas.map);
+	atlas.map.heatmap = true;
 
 	updateInfo(this);
 }
@@ -362,14 +363,14 @@ function updateInfo(viewHeater) {
 	}
 
 	// show current zoom level
-	$("#elev_info").append('<br>Zoom level: ' + map.getZoom());
+	$("#elev_info").append('<br>Zoom level: ' + atlas.map.getZoom());
 	
 	// alert messages
-	if (map.liveData) {
+	if (atlas.map.liveData) {
 		var requests = $.cookie('requests');
 		$("#alert_info").html("<div id='alert_live_info'><strong>¡Cuidado!</strong> Live data is subject to quotas set by the Google elevation API<br>You have currently used <strong>" + requests + "</strong> of your allowed <strong>25,000</strong> requests per day.<br>For more information, see \"Why is Live Data Problematic?\" below.</div>");
 	} else {
-		if (map.getZoom() > 16 || map.getZoom() < 12) {
+		if (atlas.map.getZoom() > 16 || atlas.map.getZoom() < 12) {
 			$("#alert_info").html("<div id='alert_live_info'>Static data only really works between zoom levels 12 and 16.<br>Try zooming in or out or switching to live data.</div>");
 		} else {
 			$("#alert_info").html("");			
@@ -395,7 +396,7 @@ function preProcess(lines) {
 }
 
 function influenceByZoomLevel(zoom) {
-	if (map.liveData) return 40;
+	if (atlas.map.liveData) return 40;
 	
 	if (zoom >= 17) return 110;
 	if (zoom >= 16) return 80; 
@@ -417,26 +418,26 @@ function gradient(number) {
 }
 
 function changeGradient() {
-	map.gradient = (map.gradient + 1) % 3;
+	atlas.map.gradient = (atlas.map.gradient + 1) % 3;
 
-	elevHeatmap.setOptions({
-	    gradient: gradient(map.gradient)
+	atlas.elevHeatmap.setOptions({
+	    gradient: gradient(atlas.map.gradient)
 	});
 }
 
 function toggleHeatmap() {
-	map.heatmap = !map.heatmap;
-	if (map.heatmap) {
+	atlas.map.heatmap = !atlas.map.heatmap;
+	if (atlas.map.heatmap) {
 		showElevations();
 	} else {
-		elevHeatmap.setMap(null);
+		atlas.elevHeatmap.setMap(null);
 		updateInfo(null);
 	}
 }
 
 function switchDataSource() {
-	map.liveData = !map.liveData;
-	if (map.liveData) {
+	atlas.map.liveData = !atlas.map.liveData;
+	if (atlas.map.liveData) {
 		$('#update_live_data').show();
 		$('#switch_data_source').html("Use Static Data");
 	} else {
