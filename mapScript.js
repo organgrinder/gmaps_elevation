@@ -89,17 +89,39 @@ function showElevations() {
 function showStaticElevations() {
 	var viewHeater = new Heater(map);
 
-	if (!points) points = preProcess(loadFile('elevations.txt')); 
+	if (points) callback(points, viewHeater);
+	else loadFile('elevations.txt', callback, viewHeater); 
+} 
+
+// callback hell
+function loadFile(filename, callback, viewHeater) {
+	$.ajax({
+		url: filename,
+		async: true,
+		success: function(result) {
+			callback(preProcess(result.split("\n")), viewHeater);
+		}
+	});
+}
+
+// second level of hell
+var callback = function(points, viewHeater) {
 	viewHeater.addRelevantPoints(points);
 
 	// load additional data at zoom 15 and above
 	if (map.getZoom() >= 15) { 
-		if (!morePoints) morePoints = preProcess(loadFile('elevations3.txt'));
-		viewHeater.addRelevantPoints(morePoints);
+		
+		// third level
+		var callback2 = function(points, viewHeater) {
+			viewHeater.addRelevantPoints(points);
+		};
+		
+		if (morePoints) callback2(morePoints, viewHeater);
+		else loadFile('elevations3.txt', callback2, viewHeater);
 	}
 
 	viewHeater.showNewHeatmap();
-} 
+}
 
 // fetch elevation data from Google API and display it on map
 function showLiveElevations() {
@@ -355,20 +377,6 @@ function updateInfo(viewHeater) {
 			$("#alert_info").html("");			
 		}
 	}
-}
-
-function loadFile(filename) {
-	var returned = [];
-	
-	$.ajax({
-		url: filename,
-		async: false,
-		success: function(result) {
-			returned = result.split("\n");
-		}
-	});
-	
-	return returned;
 }
 
 function preProcess(lines) {

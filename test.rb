@@ -81,5 +81,8 @@ puts "outside loop"
   4. better method than heat map?
   5. better to do it in openStreetMap? even for simple grid-based coloring?
   6. how does basic manipulation of OpenStreetMap work?  drawing layers, etc?
+  
+  MOMENTO:
+  1. email Parker re join.me
 =end
 
