@@ -1,9 +1,44 @@
 
-// global vars to hold files once they are lodaded to avoid reloading them
-var lines, moreLines;
+// global vars to hold file data after it's lodaded to avoid reloading
+var points, morePoints;
 
 // slutty global vars with attributes that everyone has free access to
 var map, elevHeatmap;
+
+// global holder object
+var atlas = {};
+
+// constants, sort of
+// order is [cold, medium, hot]
+atlas.ORIGINAL = [
+	'rgba(0, 255, 255, 0)',
+	'rgba(0, 255, 255, 1)',
+	'rgba(0, 191, 255, 1)',
+	'rgba(0, 127, 255, 1)',
+	'rgba(0, 63, 255, 1)',
+	'rgba(0, 0, 255, 1)',
+	'rgba(0, 0, 223, 1)',
+	'rgba(0, 0, 191, 1)',
+	'rgba(0, 0, 159, 1)',
+	'rgba(0, 0, 127, 1)',
+	'rgba(63, 0, 91, 1)',
+	'rgba(127, 0, 63, 1)',
+	'rgba(191, 0, 31, 1)',
+	'rgba(255, 0, 0, 1)'
+];
+atlas.MODIFIED = [
+	'rgba(0, 255, 0, 0)',
+	'rgba(0, 255, 0, 1)',
+	'rgba(255, 255, 0, 1)',
+	'rgba(255, 0, 0, 1)',
+	'rgba(0, 0, 255, 1)',
+	'rgba(255, 255, 255, 1)',
+];
+
+// can change density for more accuracy but may hit Google elevation API limits
+// changing density requires changing radius of influence as well
+atlas.DENSITY = 31; // 31 gives a nice round 1024 total points
+atlas.TOTALSTEPS = 6; // how many pieces to break up the request into
 
 google.maps.event.addDomListener(window, 'load', initialize)
 
@@ -30,7 +65,7 @@ function initialize() {
 	map.liveData = false;
 	$('#update_live_data').hide(); // hide 'Update Live Data' button
 	map.heatmap = true;
-	map.gradient = 1;
+	map.gradient = 0;
 
 	google.maps.event.addListener(map, 'idle', mapBecomesIdle);
 	
@@ -51,15 +86,15 @@ function showElevations() {
 
 // pull elevation data from file and display it on map
 function showStaticElevations() {
-	var viewHeater = new heater(map);
+	var viewHeater = new Heater(map);
 
-	if (!lines) lines = loadFile('elevations.txt'); 
-	viewHeater.addRelevantLines(lines);
+	if (!points) points = preProcess(loadFile('elevations.txt')); 
+	viewHeater.addRelevantPoints(points);
 
 	// load additional data at zoom 15 and above
 	if (map.getZoom() >= 15) { 
-		if (!moreLines) moreLines = loadFile('elevations3.txt'); 
-		viewHeater.addRelevantLines(moreLines);
+		if (!morePoints) morePoints = preProcess(loadFile('elevations3.txt'));
+		viewHeater.addRelevantPoints(morePoints);
 	}
 
 	viewHeater.showNewHeatmap();
@@ -67,66 +102,21 @@ function showStaticElevations() {
 
 // fetch elevation data from Google API and display it on map
 function showLiveElevations() {
-	var viewHeater = new heater(map);
+	var viewHeater = new Heater(map);
 
-	// can change density for more accuracy but may hit Google elevation API limits
-	// changing density requires changing radius of influence as well
-	var density = 31; // 31 gives a nice round 1024 total points
-	var totalSteps = 6; // how many pieces to break up the request into
+	viewHeater.addLocationsInView();
 	
-	viewHeater.addLocationsInView(density);
-	
-	recursiveElevGetter(viewHeater, 1, totalSteps)
+	viewHeater.recursiveElevGetter(0);
 } 
 
-// breaks up request for data from Google into pieces to avoid hitting quota
-function recursiveElevGetter(viewHeater, step, totalSteps) {
-	elevator = new google.maps.ElevationService();
-
-	var requestLocations = viewHeater.getSliceOfLocations(step, totalSteps);
-	var positionalRequest = { 'locations': requestLocations }
-	
-	elevator.getElevationForLocations(positionalRequest, function(results, status) {
-		if (status != google.maps.ElevationStatus.OK) {
-			// something went wrong with the elevation request
-			$('#elev_info').html(status);
-		} else {
-			
-			// update cookie that watches for quota-busting
-			if ($.cookie('requests')) {
-				$.cookie('requests', (parseInt($.cookie('requests')) + requestLocations.length));
-			} else {
-				$.cookie('requests', requestLocations.length, { expires: 1 } );
-			}
-
-			// show progress so user doesn't think it's frozen
-			viewHeater.showProgress(step, totalSteps);
-				
-			// add points that are on land
-			for (var i = 0; i < results.length; i++) {
-				if (results[i].elevation > 0) { 
-					viewHeater.addPoint(requestLocations[i], results[i].elevation);
-				}
-			}
-
-			if (step == totalSteps) {
-				// base case for recursion; we have all the data so we make the map
-				viewHeater.showNewHeatmap();
-			} else {
-				// recursive call to get next batch of data
-				recursiveElevGetter(viewHeater, step + 1, totalSteps)
-			}
-		}
-	});
-}
-
 // -----------------------------------
-// - the all-important heater object -
+// - the all-important Heater object -
 // -----------------------------------
 
-// heater gathers data relevant to a heatmap, puts data in form necessary 
+// Heater gathers data relevant to a heatmap, puts data in form necessary 
 // for Google elevation API, and displays heatmap layer on the map
-function heater(map) {
+// function Heater(map) {
+var Heater = function(map) {
 	var currBounds = map.getBounds();
 	this.top = currBounds.getNorthEast().lat();
 	this.bottom = currBounds.getSouthWest().lat();
@@ -150,154 +140,193 @@ function heater(map) {
 	this.landElevations = [];
 	this.locationsInView = [];
 	this.heatmapElevData = [];
-	
-	// for showing live elvation
-	this.addLocationsInView = function(density) {
-		var longs = this.right - this.left;
-		var lats = this.top - this.bottom;
-		
-		// keeps our grid of points evenly-spaced
-		var factor = (longs / lats) / (this.width / this.height); 
-		
-		// calc for non-square view window
-		if (this.width > this.height) {
-			var lngIncrement = longs / density;
-			var latIncrement = lngIncrement / factor;
-		} else {
-			var latIncrement = lats / density;
-			var lngIncrement = latIncrement * factor;
-		}
+}
 
-		for (var currLat = this.top; 
-				 currLat > this.bottom - latIncrement / 2; // to make sure we get exact number of points
-			 	 currLat -= latIncrement) {
-			for (var currLng = this.left; 
-					 currLng < this.right + lngIncrement / 2; 
-				 	 currLng += lngIncrement) {
-				this.locationsInView.push(new google.maps.LatLng(currLat, currLng));
-			}
+// for showing live elvation
+Heater.prototype.addLocationsInView = function() {
+	var longs = this.right - this.left;
+	var lats = this.top - this.bottom;
+	
+	// keeps our grid of points evenly-spaced
+	var factor = (longs / lats) / (this.width / this.height); 
+	
+	// calc for non-square view window
+	if (this.width > this.height) {
+		var lngIncrement = longs / atlas.DENSITY;
+		var latIncrement = lngIncrement / factor;
+	} else {
+		var latIncrement = lats / atlas.DENSITY;
+		var lngIncrement = latIncrement * factor;
+	}
+
+	for (var currLat = this.top; 
+			 currLat > this.bottom - latIncrement / 2; // to make sure we get exact number of points
+		 	 currLat -= latIncrement) {
+		for (var currLng = this.left; 
+				 currLng < this.right + lngIncrement / 2; 
+			 	 currLng += lngIncrement) {
+			this.locationsInView.push(new google.maps.LatLng(currLat, currLng));
 		}
 	}
+}
+
+// breaks up request for data from Google into pieces to avoid hitting quota
+Heater.prototype.recursiveElevGetter = function(step) {
+	elevator = new google.maps.ElevationService();
+
+	var requestLocations = this.getSliceOfLocations(step);
+	var positionalRequest = { 'locations': requestLocations }
 	
-	// for showing static elevation
-	this.addRelevantLines = function(lines) {
-		for (var i = 0; i < lines.length-1; i++) {
-			var lineItems = lines[i].split(" ");
+	elevator.getElevationForLocations(positionalRequest, function(results, status) {
+		if (status != google.maps.ElevationStatus.OK) {
+			// something went wrong with the elevation request
+			$('#elev_info').html(status);
+		} else {
 			
-			// add point if it's in view (plus margin) and on land
-			if (lineItems[0] > this.bottomer 	&& lineItems[0] < this.topper && 
-				lineItems[1] > this.lefter	 	&& lineItems[1] < this.righter &&
-				lineItems[2] > 0) { 
+			// update cookie that watches for quota-busting
+			if ($.cookie('requests')) {
+				$.cookie('requests', (parseInt($.cookie('requests')) + requestLocations.length));
+			} else {
+				$.cookie('requests', requestLocations.length, { expires: 1 } );
+			}
 
-				this.landLocations.push(new google.maps.LatLng(lineItems[0], lineItems[1]));
-				this.landElevations.push(lineItems[2]);
-
-				// update elevation bounds if point actually in view
-				if (lineItems[0] > this.bottom 	&& lineItems[0] < this.top && 
-					lineItems[1] > this.left	&& lineItems[1] < this.right) {
-					this.updateMaxMin(lineItems[2]);
+			// show progress so user doesn't think it's frozen
+			this.showProgress(step);
+				
+			// add points that are on land
+			for (var i = 0; i < results.length; i++) {
+				if (results[i].elevation > 0) { 
+					this.addPoint(requestLocations[i], results[i].elevation);
 				}
 			}
-		}
-	}
-	
-	// used for both static and live
-	this.showNewHeatmap = function() {
 
-		// remove old heatmap layer before adding the new one
-		if (elevHeatmap) elevHeatmap.setMap(null); 
-
-		// create array of weighted points
-		this.makeHeatmapElevData();
-
-		// create Google object 'MVCArray' from the weighted points array
-		var heatmapElevArray = new google.maps.MVCArray(this.heatmapElevData);
-		
-		// create heatmap layer
-		elevHeatmap = new google.maps.visualization.HeatmapLayer({
-		    data: heatmapElevArray,
-			opacity: .6,
-			maxIntensity: 2,
-			dissipating: true,
-			radius: influenceByZoomLevel(map.getZoom()),
-			gradient: gradient(map.gradient) // (elevHeatmap && elevHeatmap.gradient) ? gradient() : null
-	    });
-	
-		// add heatmap layer to the map
-	    elevHeatmap.setMap(map);
-		map.heatmap = true;
-
-		updateInfo(this);
-	}
-
-	// create array of weighted points using landLocations and landElevations
-	this.makeHeatmapElevData = function() {
-		
-		for (var i = 0; i < this.landLocations.length; i++) {
-			
-			// don't want to show elevations out of range (may exist in the margin)
-			var elevInRange;
-			
-			if (this.landElevations[i] > this.maxElevation) { 
-				elevInRange = this.maxElevation; 
-			} else if (this.landElevations[i] <= this.minElevation) { 
-				elevInRange = this.minElevation * 1.0001; // avoid numerator == 0
-			} else { 
-				elevInRange = this.landElevations[i]; 
+			if (step == atlas.TOTALSTEPS - 1) {
+				// base case for recursion; we have all the data so we make the map
+				this.showNewHeatmap();
+			} else {
+				// recursive call to get next batch of data
+				this.recursiveElevGetter(step + 1)
 			}
-			
-			this.heatmapElevData.push({ 
-				location: this.landLocations[i], 
-				weight: ((elevInRange - this.minElevation) / 
-					(this.maxElevation - this.minElevation)) 
-			});
 		}
-	}
-	
-	// ---------------------------------------------------------
-	// - a few little helper instance methods of heater object -
-	// ---------------------------------------------------------
-	
-	this.updateMaxMin = function(elev) {
-		this.maxElevation = Math.max(this.maxElevation, elev);
-		this.minElevation = Math.min(this.minElevation, elev);
-	}
-	
-	this.getSliceOfLocations = function(step, totalSteps) {
-		return this.locationsInView.slice(
-			this.locationsInView.length * ((step - 1) / totalSteps), 
-			this.locationsInView.length * (step / totalSteps)
-		);
-	}
-	
-	this.addPoint = function(location, elevation) {
-		this.landLocations.push(location);
-		this.landElevations.push(elevation);
-		this.updateMaxMin(elevation);
-	}
-	
-	this.showProgress = function(step, totalSteps) {
-		$('#alert_info').html("<div id='alert_live_info'><strong>Loading data... " + 
-			(this.locationsInView.length * (step / totalSteps)).toFixed(0) + 
-			"/" + this.locationsInView.length + "</div>");
-	}
-	
-	this.updateInsideInfo = function() {
-		if (this.heatmapElevData.length > 0) {
-			$("#elev_info").html('Highest elevation: ' + 
-				Math.round(this.maxElevation) + 
-				' meters <br>Lowest elevation: ' + 
-				Math.round(this.minElevation) + 
-				' meters');
-			$("#elev_info").append('<br>Heatmap created using ' + 
-				this.heatmapElevData.length + ' points of data');
-		} else {
-			$("#elev_info").html('No static data available for this view.<br>Try switching to live data or returning to San Francisco.');
-		}
-	}
-	
-} // end heater
+	}.bind(this));
+}
 
+// for showing static elevation
+Heater.prototype.addRelevantPoints = function(points) {
+	for (var i = 0; i < points.length-1; i++) {
+		
+		// add point if it's in view (plus margin)
+		if (points[i]['lat'] > this.bottomer 	&& points[i]['lat'] < this.topper && 
+			points[i]['lng'] > this.lefter	 	&& points[i]['lng'] < this.righter) { 
+
+			this.landLocations.push(new google.maps.LatLng(points[i]['lat'], points[i]['lng']));
+			this.landElevations.push(points[i]['ele']);
+
+			// update elevation bounds if point actually in view
+			if (points[i]['lat'] > this.bottom 	&& points[i]['lat'] < this.top && 
+				points[i]['lng'] > this.left	&& points[i]['lng'] < this.right) {
+				this.updateMaxMin(points[i]['ele']);
+			}
+		}
+	}
+}
+
+// used for both static and live
+Heater.prototype.showNewHeatmap = function() {
+
+	// remove old heatmap layer before adding the new one
+	if (elevHeatmap) elevHeatmap.setMap(null); 
+
+	// create array of weighted points
+	this.makeHeatmapElevData();
+
+	// create Google object 'MVCArray' from the weighted points array
+	var heatmapElevArray = new google.maps.MVCArray(this.heatmapElevData);
+	
+	// create heatmap layer
+	elevHeatmap = new google.maps.visualization.HeatmapLayer({
+	    data: heatmapElevArray,
+		opacity: .6,
+		maxIntensity: 2,
+		dissipating: true,
+		radius: influenceByZoomLevel(map.getZoom()),
+		gradient: gradient(map.gradient) 
+    });
+
+	// add heatmap layer to the map
+    elevHeatmap.setMap(map);
+	map.heatmap = true;
+
+	updateInfo(this);
+}
+
+// create array of weighted points using landLocations and landElevations
+Heater.prototype.makeHeatmapElevData = function() {
+	
+	for (var i = 0; i < this.landLocations.length; i++) {
+		
+		// don't want to show elevations out of range (may exist in the margin)
+		var elevInRange;
+		
+		if (this.landElevations[i] > this.maxElevation) { 
+			elevInRange = this.maxElevation; 
+		} else if (this.landElevations[i] <= this.minElevation) { 
+			elevInRange = this.minElevation * 1.0001; // avoid numerator == 0
+		} else { 
+			elevInRange = this.landElevations[i]; 
+		}
+		
+		this.heatmapElevData.push({ 
+			location: this.landLocations[i], 
+			weight: ((elevInRange - this.minElevation) / 
+				(this.maxElevation - this.minElevation)) 
+		});
+	}
+}
+
+// ---------------------------------------------------------
+// - a few little helper instance methods of Heater object -
+// ---------------------------------------------------------
+
+Heater.prototype.updateMaxMin = function(elev) {
+	this.maxElevation = Math.max(this.maxElevation, elev);
+	this.minElevation = Math.min(this.minElevation, elev);
+}
+
+Heater.prototype.getSliceOfLocations = function(step) {
+	return this.locationsInView.slice(
+		this.locationsInView.length * (step / atlas.TOTALSTEPS), 
+		this.locationsInView.length * ((step + 1) / atlas.TOTALSTEPS)
+	);
+}
+
+Heater.prototype.addPoint = function(location, elevation) {
+	this.landLocations.push(location);
+	this.landElevations.push(elevation);
+	this.updateMaxMin(elevation);
+}
+
+Heater.prototype.showProgress = function(step) {
+	$('#alert_info').html("<div id='alert_live_info'><strong>Loading data... " + 
+		(this.locationsInView.length * (step / atlas.TOTALSTEPS)).toFixed(0) + 
+		"/" + this.locationsInView.length + "</div>");
+}
+
+Heater.prototype.updateInsideInfo = function() {
+	if (this.heatmapElevData.length > 0) {
+		$("#elev_info").html('Highest elevation: ' + 
+			Math.round(this.maxElevation) + 
+			' meters <br>Lowest elevation: ' + 
+			Math.round(this.minElevation) + 
+			' meters');
+		$("#elev_info").append('<br>Heatmap created using ' + 
+			this.heatmapElevData.length + ' points of data');
+	} else {
+		$("#elev_info").html('No static data available for this view.<br>Try switching to live data or returning to San Francisco.');
+	}
+		$('#elev_info').append('<br>color scheme: ' + map.gradient);
+}
+	
 // ---------------------------------------
 // - a few little general helper methods -
 // ---------------------------------------
@@ -328,7 +357,8 @@ function updateInfo(viewHeater) {
 }
 
 function loadFile(filename) {
-	var returned;
+	var returned = [];
+	
 	$.ajax({
 		url: filename,
 		async: false,
@@ -336,7 +366,25 @@ function loadFile(filename) {
 			returned = result.split("\n");
 		}
 	});
+	
 	return returned;
+}
+
+function preProcess(lines) {
+	var points = lines.map(function(line) {
+		var components = line.split(" ");
+		
+		return {
+			lat: components[0],
+			lng: components[1],
+			ele: components[2]
+		};
+	});
+
+	// eliminate points under water (i.e. with elevation <= 0)
+	return points.filter(function(p) {
+		return p.ele > 0;
+	});
 }
 
 function influenceByZoomLevel(zoom) {
@@ -351,39 +399,19 @@ function influenceByZoomLevel(zoom) {
 }
 
 function gradient(number) {
-	// order is [cold, medium, hot]
-	var original = [
-	   'rgba(0, 255, 255, 0)',
-		'rgba(0, 255, 255, 1)',
-		'rgba(0, 191, 255, 1)',
-		'rgba(0, 127, 255, 1)',
-		'rgba(0, 63, 255, 1)',
-		'rgba(0, 0, 255, 1)',
-		'rgba(0, 0, 223, 1)',
-		'rgba(0, 0, 191, 1)',
-		'rgba(0, 0, 159, 1)',
-		'rgba(0, 0, 127, 1)',
-		'rgba(63, 0, 91, 1)',
-		'rgba(127, 0, 63, 1)',
-		'rgba(191, 0, 31, 1)',
-		'rgba(255, 0, 0, 1)'
-	];
-	var modified = [
-		'rgba(0, 255, 0, 0)',
-		'rgba(0, 255, 0, 1)',
-		'rgba(255, 255, 0, 1)',
-		'rgba(255, 0, 0, 1)',
-		'rgba(0, 0, 255, 1)',
-		'rgba(255, 255, 255, 1)',
-	];
-	if (number == 1) return modified;
-	if (number == 2) return original;
-	if (number == 3) return null;
+	switch (number) {
+		case 0:
+			return atlas.MODIFIED;
+		case 1:
+			return atlas.ORIGINAL;
+		case 2:
+			return null;
+	}
 }
 
 function changeGradient() {
-	if (map.gradient == 3) map.gradient = 1 
-	else map.gradient += 1;
+	map.gradient = (map.gradient + 1) % 3;
+
 	elevHeatmap.setOptions({
 	    gradient: gradient(map.gradient)
 	});
