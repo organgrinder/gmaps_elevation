@@ -346,7 +346,6 @@ Heater.prototype.updateInsideInfo = function() {
 	} else {
 		$("#elev_info").html('No static data available for this view.<br>Try switching to live data or returning to San Francisco.');
 	}
-		$('#elev_info').append('<br>color scheme: ' + map.gradient);
 }
 	
 // ---------------------------------------
