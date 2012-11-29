@@ -89,12 +89,12 @@ function showElevations() {
 function showStaticElevations() {
 	var viewHeater = new Heater(map);
 
-	if (!points) points = loadAndProcessFile('elevations.txt'); 
+	if (!points) points = preProcess(loadFile('elevations.txt')); 
 	viewHeater.addRelevantPoints(points);
 
 	// load additional data at zoom 15 and above
 	if (map.getZoom() >= 15) { 
-		if (!morePoints) morePoints = loadAndProcessFile('elevations3.txt');
+		if (!morePoints) morePoints = preProcess(loadFile('elevations3.txt'));
 		viewHeater.addRelevantPoints(morePoints);
 	}
 
@@ -357,17 +357,21 @@ function updateInfo(viewHeater) {
 	}
 }
 
-function loadAndProcessFile(filename) {
-	var lines = [];
+function loadFile(filename) {
+	var returned = [];
 	
 	$.ajax({
 		url: filename,
 		async: false,
 		success: function(result) {
-			lines = result.split("\n");
+			returned = result.split("\n");
 		}
 	});
 	
+	return returned;
+}
+
+function preProcess(lines) {
 	var points = lines.map(function(line) {
 		var components = line.split(" ");
 		
